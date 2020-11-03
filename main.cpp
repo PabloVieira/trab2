@@ -21,8 +21,8 @@ void put_forks(int i);
 void test(int i);
 void thinking(int i);
 void eating(int i);
-void down(semaphore mutex);
-void up(semaphore mutex);
+void down(semaphore * mutex);
+void up(semaphore * mutex);
 
 int main() {
     cout << "Hello, World!" << endl;
@@ -40,11 +40,11 @@ void filosofo(int i) { /* i: o numero do filosofo, de 0 a N-1 */
 
 void take_forks(int i) /* i: o numero do filosofo, de 0 a N-1 */
 {
-    down(mutex); /* entra na regi~ao crtica */
+    down(&mutex); /* entra na regi~ao crtica */
     state[i] = HUNGRY; /* registra que o filosofo esta faminto */
     test(i); /* tenta pegar os garfos */
-    up(mutex); /* sai da regi~ao crtica */
-    down(s[i]); /* bloqueia se os garfos n~ao foram pegos */
+    up(&mutex); /* sai da regi~ao crtica */
+    down(&s[i]); /* bloqueia se os garfos n~ao foram pegos */
 }
 
 void put_forks(int i) /* i: o numero do filosofo, de 0 a N-1 */
@@ -72,10 +72,10 @@ void eating(int i){
 
 }
 
-void down(semaphore mutex){
+void down(semaphore * mutex){
 
 }
 
-void up(semaphore mutex){
+void up(semaphore * mutex){
 
 }

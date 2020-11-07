@@ -1,7 +1,8 @@
-#include <iostream>
 #include <iostream>       // std::cout, std::endl
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
+#include <vector>         // std::vector
+#include <mutex>          // std::mutex
 
 using namespace std;
 
@@ -15,8 +16,9 @@ using namespace std;
 int state[N]; /* array para controlar o estado de cada filosofo */
 
 typedef int semaphore; /* semaforos s~ao um tipo especial de int */
-semaphore mutex; /* semaforo para controlar o acesso a regi~ao crtica */
-semaphore s[N]; /* um semaforo para cada filosofo para sincronizac~ao */
+semaphore garfo[N];
+
+mutex mtx;
 
 void filosofo(int i);
 void take_forks(int i);
@@ -29,6 +31,11 @@ void up(semaphore * mutex);
 
 int main() {
     cout << "Hello, World!" << endl;
+    vector<std::thread> myThreads;
+    for(int i = 0; i < N; i++){
+        myThreads.push_back(thread(filosofo, i));
+    }
+    for (auto& th : myThreads) th.join();
     return 0;
 }
 
@@ -43,40 +50,46 @@ void filosofo(int i) { /* i: o numero do filosofo, de 0 a N-1 */
 
 void take_forks(int i) /* i: o numero do filosofo, de 0 a N-1 */
 {
-    down(&mutex); /* entra na regi~ao crtica */
+    mtx.lock(); /* entra na regi~ao crtica */
     state[i] = HUNGRY; /* registra que o filosofo esta faminto */
     test(i); /* tenta pegar os garfos */
-    up(&mutex); /* sai da regi~ao crtica */
-    down(&s[i]); /* bloqueia se os garfos n~ao foram pegos */
+    mtx.unlock(); /* sai da regi~ao crtica */
+    down(&garfo[i]); /* bloqueia se os garfos n~ao foram pegos */
 }
 
 void put_forks(int i) /* i: o numero do filosofo, de 0 a N-1 */
 {
-    down(&mutex); /* entra na regi~ao crtica */
+    mtx.lock(); /* entra na regi~ao crtica */
     state[i] = THINKING; /* registra que o filosofo esta pensando */
     test(LEFT); /* v^e se o filosofo da esquerda pode comer agora */
     test(RIGHT); /* v^e se o filosofo da direita pode comer agora */
-    up(&mutex); /* sai da regi~ao crtica */
+    mtx.unlock(); /* sai da regi~ao crtica */
 }
 
 void test(int i) /* i: o numero do filosofo, de 0 a N-1 */
 {
     if(state[i] == HUNGRY && state[LEFT] != EATING && state[RIGHT] != EATING) {
         state[i] = EATING;
-        up(&s[i]);
+        up(&garfo[i]);
     }
 }
 
 void thinking(int i){
 
+    this_thread::sleep_for (chrono::seconds(5));
 }
 
 void eating(int i){
-
+    this_thread::sleep_for (chrono::seconds(2));
 }
 
 void down(semaphore * mutex){
-
+    if(*mutex == 1)
+        *mutex = 0;
+    else{
+        int try_again = rand() % 3 + 1;
+        this_thread::sleep_for (chrono::seconds(try_again));
+    }
 }
 
 void up(semaphore * mutex){
